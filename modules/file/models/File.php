@@ -1,6 +1,7 @@
 <?php
 namespace yii\easyii\modules\file\models;
 
+use Overtrue\Pinyin\Pinyin;
 use Yii;
 use yii\behaviors\SluggableBehavior;
 use yii\easyii\behaviors\SeoBehavior;
@@ -23,7 +24,7 @@ class File extends \yii\easyii\components\ActiveRecord
             ['slug', 'match', 'pattern' => self::$SLUG_PATTERN, 'message' => Yii::t('easyii', 'Slug can contain only 0-9, a-z and "-" characters (max: 128).')],
             ['slug', 'default', 'value' => null],
             [['downloads', 'size'], 'integer'],
-            ['time', 'default', 'value' => time()]
+            ['time', 'default', 'value' => time()],
         ];
     }
 
@@ -32,7 +33,7 @@ class File extends \yii\easyii\components\ActiveRecord
         return [
             'title' => Yii::t('easyii', 'Title'),
             'file' => Yii::t('easyii', 'File'),
-            'slug' => Yii::t('easyii', 'Slug')
+            'slug' => Yii::t('easyii', 'Slug'),
         ];
     }
 
@@ -43,17 +44,19 @@ class File extends \yii\easyii\components\ActiveRecord
             'seoBehavior' => SeoBehavior::className(),
             'sluggable' => [
                 'class' => SluggableBehavior::className(),
-                'attribute' => 'title',
-                'ensureUnique' => true
-            ]
+                'ensureUnique' => true,
+                'value' => function ($event) {
+                    return (new Pinyin)->permalink($this->title);
+                },
+            ],
         ];
     }
 
     public function beforeSave($insert)
     {
         if (parent::beforeSave($insert)) {
-            if(!$insert && $this->file !== $this->oldAttributes['file']){
-                @unlink(Yii::getAlias('@webroot').$this->oldAttributes['file']);
+            if (!$insert && $this->file !== $this->oldAttributes['file']) {
+                @unlink(Yii::getAlias('@webroot') . $this->oldAttributes['file']);
             }
             return true;
         } else {
@@ -65,6 +68,6 @@ class File extends \yii\easyii\components\ActiveRecord
     {
         parent::afterDelete();
 
-        @unlink(Yii::getAlias('@webroot').$this->file);
+        @unlink(Yii::getAlias('@webroot') . $this->file);
     }
 }

@@ -1,11 +1,12 @@
 <?php
 namespace yii\easyii\components;
 
+use creocoder\nestedsets\NestedSetsBehavior;
+use Overtrue\Pinyin\Pinyin;
 use Yii;
 use yii\behaviors\SluggableBehavior;
 use yii\easyii\behaviors\CacheFlush;
 use yii\easyii\behaviors\SeoBehavior;
-use creocoder\nestedsets\NestedSetsBehavior;
 
 /**
  * Base CategoryModel. Shared by categories
@@ -27,7 +28,7 @@ class CategoryModel extends \yii\easyii\components\ActiveRecord
             ['slug', 'match', 'pattern' => self::$SLUG_PATTERN, 'message' => Yii::t('easyii', 'Slug can contain only 0-9, a-z and "-" characters (max: 128).')],
             ['slug', 'default', 'value' => null],
             ['status', 'integer'],
-            ['status', 'default', 'value' => self::STATUS_ON]
+            ['status', 'default', 'value' => self::STATUS_ON],
         ];
     }
 
@@ -45,26 +46,28 @@ class CategoryModel extends \yii\easyii\components\ActiveRecord
         return [
             'cacheflush' => [
                 'class' => CacheFlush::className(),
-                'key' => [static::tableName().'_tree', static::tableName().'_flat']
+                'key' => [static::tableName() . '_tree', static::tableName() . '_flat'],
             ],
             'seoBehavior' => SeoBehavior::className(),
             'sluggable' => [
                 'class' => SluggableBehavior::className(),
-                'attribute' => 'title',
-                'ensureUnique' => true
+                'ensureUnique' => true,
+                'value' => function ($event) {
+                    return (new Pinyin)->permalink($this->title);
+                },
             ],
             'tree' => [
                 'class' => NestedSetsBehavior::className(),
-                'treeAttribute' => 'tree'
-            ]
+                'treeAttribute' => 'tree',
+            ],
         ];
     }
 
     public function beforeSave($insert)
     {
         if (parent::beforeSave($insert)) {
-            if(!$insert && $this->image != $this->oldAttributes['image'] && $this->oldAttributes['image']){
-                @unlink(Yii::getAlias('@webroot').$this->oldAttributes['image']);
+            if (!$insert && $this->image != $this->oldAttributes['image'] && $this->oldAttributes['image']) {
+                @unlink(Yii::getAlias('@webroot') . $this->oldAttributes['image']);
             }
             return true;
         } else {
@@ -76,7 +79,7 @@ class CategoryModel extends \yii\easyii\components\ActiveRecord
     {
         parent::afterDelete();
 
-        if($this->image) {
+        if ($this->image) {
             @unlink(Yii::getAlias('@webroot') . $this->image);
         }
     }
@@ -96,10 +99,10 @@ class CategoryModel extends \yii\easyii\components\ActiveRecord
     public static function tree()
     {
         $cache = Yii::$app->cache;
-        $key = static::tableName().'_tree';
+        $key = static::tableName() . '_tree';
 
         $tree = $cache->get($key);
-        if(!$tree){
+        if (!$tree) {
             $tree = static::generateTree();
             $cache->set($key, $tree, 3600);
         }
@@ -113,10 +116,10 @@ class CategoryModel extends \yii\easyii\components\ActiveRecord
     public static function cats()
     {
         $cache = Yii::$app->cache;
-        $key = static::tableName().'_flat';
+        $key = static::tableName() . '_flat';
 
         $flat = $cache->get($key);
-        if(!$flat){
+        if (!$flat) {
             $flat = static::generateFlat();
             $cache->set($key, $flat, 3600);
         }
@@ -146,7 +149,7 @@ class CategoryModel extends \yii\easyii\components\ActiveRecord
                 $l = count($stack);
 
                 // Check if we're dealing with different levels
-                while($l > 0 && $stack[$l - 1]->depth >= $item['depth']) {
+                while ($l > 0 && $stack[$l - 1]->depth >= $item['depth']) {
                     array_pop($stack);
                     $l--;
                 }
@@ -155,15 +158,15 @@ class CategoryModel extends \yii\easyii\components\ActiveRecord
                 if ($l == 0) {
                     // Assigning the root node
                     $i = count($trees);
-                    $trees[$i] = (object)$item;
-                    $stack[] = & $trees[$i];
+                    $trees[$i] = (object) $item;
+                    $stack[] = &$trees[$i];
 
                 } else {
                     // Add node to parent
                     $item['parent'] = $stack[$l - 1]->category_id;
                     $i = count($stack[$l - 1]->children);
-                    $stack[$l - 1]->children[$i] = (object)$item;
-                    $stack[] = & $stack[$l - 1]->children[$i];
+                    $stack[$l - 1]->children[$i] = (object) $item;
+                    $stack[] = &$stack[$l - 1]->children[$i];
                 }
             }
         }
@@ -184,21 +187,21 @@ class CategoryModel extends \yii\easyii\components\ActiveRecord
             $depth = 0;
             $lastId = 0;
             foreach ($collection as $node) {
-                $node = (object)$node;
+                $node = (object) $node;
                 $id = $node->category_id;
                 $node->parent = '';
 
-                if($node->depth > $depth){
+                if ($node->depth > $depth) {
                     $node->parent = $flat[$lastId]->category_id;
                     $depth = $node->depth;
-                } elseif($node->depth == 0){
+                } elseif ($node->depth == 0) {
                     $depth = 0;
                 } else {
                     if ($node->depth == $depth) {
                         $node->parent = $flat[$lastId]->parent;
                     } else {
-                        foreach($flat as $temp){
-                            if($temp->depth == $node->depth){
+                        foreach ($flat as $temp) {
+                            if ($temp->depth == $node->depth) {
                                 $node->parent = $temp->parent;
                                 $depth = $temp->depth;
                                 break;
@@ -212,10 +215,10 @@ class CategoryModel extends \yii\easyii\components\ActiveRecord
             }
         }
 
-        foreach($flat as &$node){
+        foreach ($flat as &$node) {
             $node->children = [];
-            foreach($flat as $temp){
-                if($temp->parent == $node->category_id){
+            foreach ($flat as $temp) {
+                if ($temp->parent == $node->category_id) {
                     $node->children[] = $temp->category_id;
                 }
             }

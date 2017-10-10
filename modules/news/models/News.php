@@ -1,6 +1,7 @@
 <?php
 namespace yii\easyii\modules\news\models;
 
+use Overtrue\Pinyin\Pinyin;
 use Yii;
 use yii\behaviors\SluggableBehavior;
 use yii\easyii\behaviors\SeoBehavior;
@@ -30,7 +31,7 @@ class News extends \yii\easyii\components\ActiveRecord
             ['slug', 'match', 'pattern' => self::$SLUG_PATTERN, 'message' => Yii::t('easyii', 'Slug can contain only 0-9, a-z and "-" characters (max: 128).')],
             ['slug', 'default', 'value' => null],
             ['status', 'default', 'value' => self::STATUS_ON],
-            ['tagNames', 'safe']
+            ['tagNames', 'safe'],
         ];
     }
 
@@ -54,8 +55,10 @@ class News extends \yii\easyii\components\ActiveRecord
             'taggabble' => Taggable::className(),
             'sluggable' => [
                 'class' => SluggableBehavior::className(),
-                'attribute' => 'title',
-                'ensureUnique' => true
+                'ensureUnique' => true,
+                'value' => function ($event) {
+                    return (new Pinyin)->permalink($this->title);
+                },
             ],
         ];
     }
@@ -65,16 +68,14 @@ class News extends \yii\easyii\components\ActiveRecord
         return $this->hasMany(Photo::className(), ['item_id' => 'news_id'])->where(['class' => self::className()])->sort();
     }
 
-
-
     public function beforeSave($insert)
     {
         if (parent::beforeSave($insert)) {
             $settings = Yii::$app->getModule('admin')->activeModules['news']->settings;
             $this->short = StringHelper::truncate($settings['enableShort'] ? $this->short : strip_tags($this->text), $settings['shortMaxLength']);
 
-            if(!$insert && $this->image != $this->oldAttributes['image'] && $this->oldAttributes['image']){
-                @unlink(Yii::getAlias('@webroot').$this->oldAttributes['image']);
+            if (!$insert && $this->image != $this->oldAttributes['image'] && $this->oldAttributes['image']) {
+                @unlink(Yii::getAlias('@webroot') . $this->oldAttributes['image']);
             }
             return true;
         } else {
@@ -86,11 +87,11 @@ class News extends \yii\easyii\components\ActiveRecord
     {
         parent::afterDelete();
 
-        if($this->image){
-            @unlink(Yii::getAlias('@webroot').$this->image);
+        if ($this->image) {
+            @unlink(Yii::getAlias('@webroot') . $this->image);
         }
 
-        foreach($this->getPhotos()->all() as $photo){
+        foreach ($this->getPhotos()->all() as $photo) {
             $photo->delete();
         }
     }

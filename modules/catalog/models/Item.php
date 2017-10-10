@@ -1,6 +1,7 @@
 <?php
 namespace yii\easyii\modules\catalog\models;
 
+use Overtrue\Pinyin\Pinyin;
 use Yii;
 use yii\behaviors\SluggableBehavior;
 use yii\easyii\behaviors\SeoBehavior;
@@ -54,23 +55,25 @@ class Item extends \yii\easyii\components\ActiveRecord
             'seoBehavior' => SeoBehavior::className(),
             'sluggable' => [
                 'class' => SluggableBehavior::className(),
-                'attribute' => 'title',
-                'ensureUnique' => true
-            ]
+                'ensureUnique' => true,
+                'value' => function ($event) {
+                    return (new Pinyin)->permalink($this->title);
+                },
+            ],
         ];
     }
 
     public function beforeSave($insert)
     {
         if (parent::beforeSave($insert)) {
-            if(!$this->data || (!is_object($this->data) && !is_array($this->data))){
+            if (!$this->data || (!is_object($this->data) && !is_array($this->data))) {
                 $this->data = new \stdClass();
             }
 
             $this->data = json_encode($this->data);
 
-            if(!$insert && $this->image != $this->oldAttributes['image'] && $this->oldAttributes['image']){
-                @unlink(Yii::getAlias('@webroot').$this->oldAttributes['image']);
+            if (!$insert && $this->image != $this->oldAttributes['image'] && $this->oldAttributes['image']) {
+                @unlink(Yii::getAlias('@webroot') . $this->oldAttributes['image']);
             }
 
             return true;
@@ -79,29 +82,31 @@ class Item extends \yii\easyii\components\ActiveRecord
         }
     }
 
-    public function afterSave($insert, $attributes){
+    public function afterSave($insert, $attributes)
+    {
         parent::afterSave($insert, $attributes);
 
         $this->parseData();
 
         ItemData::deleteAll(['item_id' => $this->primaryKey]);
 
-        foreach($this->data as $name => $value){
-            if(!is_array($value)){
+        foreach ($this->data as $name => $value) {
+            if (!is_array($value)) {
                 $this->insertDataValue($name, $value);
             } else {
-                foreach($value as $arrayItem){
+                foreach ($value as $arrayItem) {
                     $this->insertDataValue($name, $arrayItem);
                 }
             }
         }
     }
 
-    private function insertDataValue($name, $value){
+    private function insertDataValue($name, $value)
+    {
         Yii::$app->db->createCommand()->insert(ItemData::tableName(), [
             'item_id' => $this->primaryKey,
             'name' => $name,
-            'value' => $value
+            'value' => $value,
         ])->execute();
     }
 
@@ -125,18 +130,19 @@ class Item extends \yii\easyii\components\ActiveRecord
     {
         parent::afterDelete();
 
-        foreach($this->getPhotos()->all() as $photo){
+        foreach ($this->getPhotos()->all() as $photo) {
             $photo->delete();
         }
 
-        if($this->image) {
+        if ($this->image) {
             @unlink(Yii::getAlias('@webroot') . $this->image);
         }
 
         ItemData::deleteAll(['item_id' => $this->primaryKey]);
     }
 
-    private function parseData(){
+    private function parseData()
+    {
         $this->data = $this->data !== '' ? json_decode($this->data) : [];
     }
 }
