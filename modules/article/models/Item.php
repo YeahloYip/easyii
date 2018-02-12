@@ -57,7 +57,7 @@ class Item extends \yii\easyii\components\ActiveRecord
                 'class' => SluggableBehavior::className(),
                 'ensureUnique' => true,
                 'value' => function ($event) {
-                    return (new Pinyin)->permalink($this->title);
+                    return (new Pinyin)->permalink(strtolower($this->title));
                 },
             ],
         ];

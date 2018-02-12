@@ -5,13 +5,13 @@ class FeedbackModule extends \yii\easyii\components\Module
 {
     public $settings = [
         'mailAdminOnNewFeedback' => true,
-        'subjectOnNewFeedback' => 'New feedback',
+        'subjectOnNewFeedback' => '新的客户反馈消息',
         'templateOnNewFeedback' => '@easyii/modules/feedback/mail/en/new_feedback',
 
         'answerTemplate' => '@easyii/modules/feedback/mail/en/answer',
-        'answerSubject' => 'Answer on your feedback message',
-        'answerHeader' => 'Hello,',
-        'answerFooter' => 'Best regards.',
+        'answerSubject' => '回复你的客户反馈消息',
+        'answerHeader' => '您好,',
+        'answerFooter' => '此致.',
 
         'enableTitle' => false,
         'enablePhone' => true,
