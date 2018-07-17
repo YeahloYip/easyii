@@ -8,7 +8,7 @@ $asset = FrontendAsset::register($this);
 $position = Setting::get('toolbar_position') === 'bottom' ? 'bottom' : 'top';
 $this->registerCss('body {padding-'.$position.': 50px;}');
 ?>
-<link href='http://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700&subset=latin,cyrillic' rel='stylesheet' type='text/css'>
+<link href='http://fonts.font.im/css?family=Open+Sans:400,300,600,700&subset=latin,cyrillic' rel='stylesheet' type='text/css'>
 <nav id="easyii-navbar" class="navbar navbar-inverse navbar-fixed-<?= $position ?>">
     <div class="container">
         <ul class="nav navbar-nav navbar-left">
