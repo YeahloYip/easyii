@@ -30,14 +30,19 @@ $module = $this->context->module->id;
 
 <?= $form->field($model, 'text')->widget(Redactor::className(),[
     'options' => [
+        'lang' => 'zh',
         'minHeight' => 400,
+        'plugins' => ['fullscreen'],
         'imageUpload' => Url::to(['/admin/redactor/upload', 'dir' => 'article'], true),
         'fileUpload' => Url::to(['/admin/redactor/upload', 'dir' => 'article'], true),
-        'plugins' => ['fullscreen']
     ]
 ]) ?>
 
-<?= $form->field($model, 'time')->widget(DateTimePicker::className()); ?>
+<?= $form->field($model, 'time')->widget(DateTimePicker::className(),[
+    'options' => [
+        'locale' => 'zh-cn'
+    ]
+]); ?>
 
 <?php if($this->context->module->settings['enableTags']) : ?>
     <?= $form->field($model, 'tagNames')->widget(TagsInput::className()) ?>

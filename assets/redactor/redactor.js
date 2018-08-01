@@ -169,13 +169,13 @@
 			toolbarOverflow: false,
 			buttonSource: true,
 
-			buttons: ['html', 'formatting', 'bold', 'italic', 'deleted', 'unorderedlist', 'orderedlist',
+			buttons: ['html', 'formatting', 'bold', 'italic', 'underline', 'deleted', 'unorderedlist', 'orderedlist',
 					  'outdent', 'indent', 'image', 'video', 'file', 'table', 'link', 'alignment', '|',
-					  'horizontalrule'], // 'underline', 'alignleft', 'aligncenter', 'alignright', 'justify'
+					  'horizontalrule', 'divclass'], // 'alignleft', 'aligncenter', 'alignright', 'justify'
 			buttonsHideOnMobile: [],
 
 			activeButtons: ['deleted', 'italic', 'bold', 'underline', 'unorderedlist', 'orderedlist',
-							'alignleft', 'aligncenter', 'alignright', 'justify', 'table'],
+							'alignleft', 'aligncenter', 'alignright', 'justify', 'table', 'divclass'],
 			activeButtonsStates: {
 				b: 'bold',
 				strong: 'bold',
@@ -188,14 +188,15 @@
 				u: 'underline',
 				tr: 'table',
 				td: 'table',
-				table: 'table'
+				table: 'table',
+				div: 'divclass'
 			},
 
 			formattingTags: ['p', 'blockquote', 'pre', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
 
 			linebreaks: false,
 			paragraphy: true,
-			convertDivs: true,
+			convertDivs: false,
 			convertLinks: true,
 			convertImageLinks: false,
 			convertVideoLinks: false,
@@ -213,13 +214,13 @@
 			buffer: [],
 			rebuffer: [],
 			textareamode: false,
-			emptyHtml: '<p>&#x200b;</p>',
+			emptyHtml: '<div>&#x200b;</div>',
 			invisibleSpace: '&#x200b;',
 			rBlockTest: /^(P|H[1-6]|LI|ADDRESS|SECTION|HEADER|FOOTER|ASIDE|ARTICLE)$/i,
 			alignmentTags: ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DD', 'DL', 'DT', 'DIV', 'TD',
 								'BLOCKQUOTE', 'OUTPUT', 'FIGCAPTION', 'ADDRESS', 'SECTION',
 								'HEADER', 'FOOTER', 'ASIDE', 'ARTICLE'],
-			ownLine: ['area', 'body', 'head', 'hr', 'i?frame', 'link', 'meta', 'noscript', 'style', 'script', 'table', 'tbody', 'thead', 'tfoot'],
+			ownLine: ['area', 'body', 'head', 'hr', 'iframe', 'link', 'meta', 'noscript', 'style', 'script', 'table', 'tbody', 'thead', 'tfoot'],
 			contOwnLine: ['li', 'dt', 'dt', 'h[1-6]', 'option', 'script'],
 			newLevel: ['blockquote', 'div', 'dl', 'fieldset', 'form', 'frameset', 'map', 'ol', 'p', 'pre', 'select', 'td', 'th', 'tr', 'ul'],
 			blockLevelElements: ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DD', 'DL', 'DT', 'DIV', 'LI',
@@ -299,7 +300,16 @@
 					underline: 'Underline',
 					alignment: 'Alignment',
 					filename: 'Name (optional)',
-					edit: 'Edit'
+					edit: 'Edit',
+					divclass: 'Div Fullscreen',
+					divclass_screen: 'Setup Screen',
+					divclass_background: 'Setup Background',
+					divclass_none: 'None',
+					divclass_full: 'fulls creen',
+					divclass_normal: 'normal screen',
+					divclass_white: 'white',
+					divclass_black: 'black',
+					divclass_gray: 'gray',
 				}
 			}
 	};
@@ -665,6 +675,11 @@
 				{
 					exec: 'inserthorizontalrule',
 					title: lang.horizontalrule
+				},
+				divclass:
+				{
+					title: lang.divclass,
+					func: 'divclassShow',
 				}
 
 			}
@@ -1569,7 +1584,7 @@
 
 									var $list = $(listCurrent).closest('ol, ul');
 									$(listCurrent).remove();
-									var node = $('<p>' + this.opts.invisibleSpace + '</p>');
+									var node = $('<div>' + this.opts.invisibleSpace + '</div>');
 									$list.after(node);
 									this.selectionStart(node);
 
@@ -1592,7 +1607,7 @@
 								var blockElem = this.getBlock();
 								if (blockElem.tagName === 'DIV' && !$(blockElem).hasClass('redactor_editor'))
 								{
-									var node = $('<p>' + this.opts.invisibleSpace + '</p>');
+									var node = $('<div>' + this.opts.invisibleSpace + '</div>');
 									$(blockElem).replaceWith(node);
 									this.selectionStart(node);
 								}
@@ -1603,7 +1618,7 @@
 						{
 							// hit enter
 							this.bufferSet();
-							var node = $('<p>' + this.opts.invisibleSpace + '</p>');
+							var node = $('<div>' + this.opts.invisibleSpace + '</div>');
 							this.insertNode(node[0]);
 							this.selectionStart(node);
 							this.callback('enter', e);
@@ -3577,7 +3592,7 @@
 			html = $.trim(html);
 
 			if (this.opts.linebreaks === true) return html;
-			if (html === '' || html === '<p></p>') return this.opts.emptyHtml;
+			if (html === '' || html === '<p></p>' || html ==='<div></div>') return this.opts.emptyHtml;
 
 			html = html + "\n";
 
@@ -7343,6 +7358,28 @@
 				+ '<footer>'
 					+ '<button class="redactor_modal_btn redactor_btn_modal_close">' + this.opts.curLang.cancel + '</button>'
 					+ '<button id="redactor_insert_video_btn" class="redactor_modal_btn redactor_modal_action_btn">' + this.opts.curLang.insert + '</button>'
+				+ '</footer>',
+
+				modal_divclass: String()
+				+ '<section id="redactor-modal-divclass-insert">'
+					+ '<form id="redactorInsertVideoForm">'
+						+ '<label>' + this.opts.curLang.divclass_screen + '</label>'
+						+ '<select id="redactor_divclass_screen">'
+							+ '<option value="">' + this.opts.curLang.divclass_none + '</option>'
+							+ '<option value="divclass-full">' + this.opts.curLang.divclass_full + '</option>'
+							+ '<option value="divclass-normal">' + this.opts.curLang.divclass_normal + '</option>'
+						+ '</select>'
+						+ '<label>' + this.opts.curLang.divclass_background + '</label>'
+						+ '<select id="redactor_divclass_background">'
+							+ '<option value="">' + this.opts.curLang.divclass_white + '</option>'
+							+ '<option value="divclass-gray">' + this.opts.curLang.divclass_gray + '</option>'
+							+ '<option value="divclass-black">' + this.opts.curLang.divclass_black + '</option>'
+						+ '</select>'
+					+ '</form>'
+				+ '</section>'
+				+ '<footer>'
+					+ '<button class="redactor_modal_btn redactor_btn_modal_close">' + this.opts.curLang.cancel + '</button>'
+					+ '<button id="redactor_insert_divclass_btn" class="redactor_modal_btn redactor_modal_action_btn">' + this.opts.curLang.save + '</button>'
 				+ '</footer>'
 
 			});
@@ -8208,8 +8245,60 @@
 			}
 
 			return array;
-		}
+		},
 
+		// divclass
+		divclassShow: function()
+		{
+			this.selectionSave();
+
+			var callback = $.proxy(function()
+			{
+				var block = this.getBlock();
+				if (!block && this.opts.linebreaks)
+				{
+					// one element
+					this.exec('formatblock', 'div');
+					var block = this.getBlock();
+				}
+
+				elemClass = $(block).attr('class');
+				if(elemClass){
+					var sel = $("#redactor_divclass_screen").find("option[value='"+elemClass+"']");
+					if (sel.length > 0){
+						sel.attr("selected",true);
+					}
+				}
+
+				$('#redactor_insert_divclass_btn').click($.proxy(this.divclassInsert, this));
+			}, this);
+
+			this.modalInit(this.opts.curLang.divclass, this.opts.modal_divclass, 600, callback);
+		},
+		divclassInsert: function ()
+		{
+			var screen = $('#redactor_divclass_screen').val();
+			var background = $('#redactor_divclass_background').val();
+
+			this.bufferSet();
+			this.selectionSave();
+
+			var block = this.getBlock();
+			content = $(block).html();
+
+			var node = $('<div>').append(content);
+			node.removeClass();
+			node.addClass(background);
+
+			var node = $('<div>').append(content);
+			node.addClass(screen);
+
+			$(block).replaceWith(node);
+
+			this.selectionRestore();
+			this.sync();
+			this.modalClose();
+		},
 	};
 
 	// constructor

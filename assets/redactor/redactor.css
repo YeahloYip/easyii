@@ -979,3 +979,7 @@ body .redactor_air .redactor_toolbar {
     background-position: 0 0;
   }
 }
+
+.re-divclass:before {
+  content: "\e610";
+}
