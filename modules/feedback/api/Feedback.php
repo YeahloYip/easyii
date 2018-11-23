@@ -3,12 +3,10 @@ namespace yii\easyii\modules\feedback\api;
 
 use Yii;
 use yii\easyii\modules\feedback\models\Feedback as FeedbackModel;
-
+use yii\easyii\widgets\ReCaptcha;
 use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\widgets\ActiveForm;
-use yii\easyii\widgets\ReCaptcha;
-
 
 /**
  * Feedback module API
@@ -24,7 +22,7 @@ class Feedback extends \yii\easyii\components\API
 
     private $_defaultFormOptions = [
         'errorUrl' => '',
-        'successUrl' => ''
+        'successUrl' => '',
     ];
 
     public function api_form($options = [])
@@ -36,7 +34,7 @@ class Feedback extends \yii\easyii\components\API
         ob_start();
         $form = ActiveForm::begin([
             'enableClientValidation' => true,
-            'action' => Url::to(['/admin/feedback/send'])
+            'action' => Url::to(['/admin/feedback/send']),
         ]);
 
         echo Html::hiddenInput('errorUrl', $options['errorUrl'] ? $options['errorUrl'] : Url::current([self::SENT_VAR => 0]));
@@ -45,14 +43,36 @@ class Feedback extends \yii\easyii\components\API
         echo $form->field($model, 'name');
         echo $form->field($model, 'email')->input('email');
 
-        if($settings['enablePhone']) echo $form->field($model, 'phone');
-        if($settings['enableTitle']) echo $form->field($model, 'title');
+        if ($settings['enablePhone']) {
+            echo $form->field($model, 'phone');
+        }
+
+        if ($settings['enableTitle']) {
+            echo $form->field($model, 'title');
+        }
 
         echo $form->field($model, 'text')->textarea();
 
-        if($settings['enableCaptcha']) echo $form->field($model, 'reCaptcha')->widget(ReCaptcha::className());
+        if ($settings['enableCaptcha']) {
+            echo $form->field($model, 'reCaptcha')->widget(ReCaptcha::className());
+        }
 
-        echo Html::submitButton(Yii::t('easyii', 'Send'), ['class' => 'btn btn-primary']);
+        echo <<<EOH
+<div class="form-group">
+    <div id="vaptchaContainer" style="width: 100%;height: 36px;">
+        <div class="vaptcha-init-main">
+            <div class="vaptcha-init-loading">
+                <a href="/" target="_blank">
+                    <img src="https://cdn.vaptcha.com/vaptcha-loading.gif" />
+                </a>
+                <span class="vaptcha-text">Vaptcha启动中...</span>
+            </div>
+        </div>
+    </div>
+</div>
+EOH;
+
+        echo Html::submitButton(Yii::t('easyii', 'Send'), ['class' => 'feedback-btn btn btn-primary', 'disabled' => 'disabled']);
         ActiveForm::end();
 
         return ob_get_clean();
@@ -61,7 +81,7 @@ class Feedback extends \yii\easyii\components\API
     public function api_save($data)
     {
         $model = new FeedbackModel($data);
-        if($model->save()){
+        if ($model->save()) {
             return ['result' => 'success'];
         } else {
             return ['result' => 'error', 'error' => $model->getErrors()];
