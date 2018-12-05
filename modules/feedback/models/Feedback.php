@@ -5,8 +5,8 @@ use Yii;
 use yii\easyii\behaviors\CalculateNotice;
 use yii\easyii\helpers\Mail;
 use yii\easyii\models\Setting;
-use yii\easyii\validators\ReCaptchaValidator;
 use yii\easyii\validators\EscapeValidator;
+use yii\easyii\validators\ReCaptchaValidator;
 use yii\helpers\Url;
 
 class Feedback extends \yii\easyii\components\ActiveRecord
@@ -29,11 +29,11 @@ class Feedback extends \yii\easyii\components\ActiveRecord
         return [
             [['name', 'email', 'text'], 'required'],
             [['name', 'email', 'phone', 'title', 'text'], 'trim'],
-            [['name','title', 'text'], EscapeValidator::className()],
+            [['name', 'title', 'text'], EscapeValidator::className()],
             ['title', 'string', 'max' => 128],
             ['email', 'email'],
             ['phone', 'match', 'pattern' => '/^[\d\s-\+\(\)]+$/'],
-            ['reCaptcha', ReCaptchaValidator::className(), 'when' => function($model){
+            ['reCaptcha', ReCaptchaValidator::className(), 'when' => function ($model) {
                 return $model->isNewRecord && Yii::$app->getModule('admin')->activeModules['feedback']->settings['enableCaptcha'];
             }],
         ];
@@ -42,7 +42,7 @@ class Feedback extends \yii\easyii\components\ActiveRecord
     public function beforeSave($insert)
     {
         if (parent::beforeSave($insert)) {
-            if($insert){
+            if ($insert) {
                 $this->ip = Yii::$app->request->userIP;
                 $this->time = time();
                 $this->status = self::STATUS_NEW;
@@ -57,8 +57,8 @@ class Feedback extends \yii\easyii\components\ActiveRecord
     {
         parent::afterSave($insert, $changedAttributes);
 
-        if($insert){
-            $this->mailAdmin();
+        if ($insert) {
+            // $this->mailAdmin();
         }
     }
 
@@ -72,7 +72,7 @@ class Feedback extends \yii\easyii\components\ActiveRecord
             'answer_subject' => Yii::t('easyii/feedback', 'Subject'),
             'answer_text' => Yii::t('easyii', 'Text'),
             'phone' => Yii::t('easyii/feedback', 'Phone'),
-            'reCaptcha' => Yii::t('easyii', 'Anti-spam check')
+            'reCaptcha' => Yii::t('easyii', 'Anti-spam check'),
         ];
     }
 
@@ -81,10 +81,10 @@ class Feedback extends \yii\easyii\components\ActiveRecord
         return [
             'cn' => [
                 'class' => CalculateNotice::className(),
-                'callback' => function(){
+                'callback' => function () {
                     return self::find()->status(self::STATUS_NEW)->count();
-                }
-            ]
+                },
+            ],
         ];
     }
 
@@ -92,7 +92,7 @@ class Feedback extends \yii\easyii\components\ActiveRecord
     {
         $settings = Yii::$app->getModule('admin')->activeModules['feedback']->settings;
 
-        if(!$settings['mailAdminOnNewFeedback']){
+        if (!$settings['mailAdminOnNewFeedback']) {
             return false;
         }
         return Mail::send(

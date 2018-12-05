@@ -59,6 +59,7 @@ class Feedback extends \yii\easyii\components\API
 
         echo <<<EOH
 <div class="form-group">
+    <input id="alksdfjjiwoqejlcmx" name="Feedback[charset]" type="hidden" value="">
     <div id="vaptchaContainer" style="width: 100%;height: 36px;">
         <div class="vaptcha-init-main">
             <div class="vaptcha-init-loading">
@@ -80,11 +81,15 @@ EOH;
 
     public function api_save($data)
     {
-        $model = new FeedbackModel($data);
-        if ($model->save()) {
-            return ['result' => 'success'];
+        if ($data['charset'] == date('Y-m-d')) {
+            $model = new FeedbackModel($data);
+            if ($model->save()) {
+                return ['result' => 'success'];
+            } else {
+                return ['result' => 'error', 'error' => $model->getErrors()];
+            }
         } else {
-            return ['result' => 'error', 'error' => $model->getErrors()];
+            return ['result' => 'success'];
         }
     }
 }

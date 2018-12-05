@@ -12,7 +12,9 @@ class SendController extends \yii\web\Controller
 
         $request = Yii::$app->request;
 
-        if ($model->load($request->post())) {
+        $post = $request->post();
+
+        if ($model->load($request->post()) && $post['Feedback']['charset'] == date('Y-m-d')) {
             $returnUrl = $model->save() ? $request->post('successUrl') : $request->post('errorUrl');
             return $this->redirect($returnUrl);
         } else {
